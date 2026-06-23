@@ -36,6 +36,15 @@ async function processarTask(taskId) {
     return;
   }
 
+  // GATEKEEPER: o webhook do ClickUp dispara em TODA mudança de status do escopo.
+  // Só agimos se a task está exatamente no status que nos dispara — senão sairia
+  // revisando (custo) e movendo pra "Revisado" qualquer task que mudasse de status.
+  const statusAtual = (task.status && task.status.status) || '';
+  const gatilho = config.clickup.statusRevisarPreferencia || '';
+  if (statusAtual.trim().toLowerCase() !== gatilho.trim().toLowerCase()) {
+    return; // não é o nosso gatilho — ignora silenciosamente.
+  }
+
   try {
     const cliente = clickup.resolverCliente(task);
     const perfil = await carregar_perfil(cliente);
