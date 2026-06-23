@@ -1,20 +1,45 @@
+version: "3.7"
+
 services:
-  revisao-posts:
-    build: .
-    container_name: revisao-posts
-    restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3000"
+  app:
+    image: ghcr.io/palomodigital/revisao-post:latest
+    networks:
+      - PalomoRede
     environment:
       - PORT=3000
+      - BASE_URL=https://revisao.palomodigital.com.br
+      # Segredos: injetados pelo ambiente do stack no Portainer (não versionar).
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-5}
-      - OPENAI_REASONING_EFFORT=${OPENAI_REASONING_EFFORT:-medium}
-      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-16000}
-      - OPENAI_TIMEOUT_MS=${OPENAI_TIMEOUT_MS:-90000}
+      - OPENAI_MODEL=gpt-5
+      - OPENAI_REASONING_EFFORT=medium
+      - OPENAI_MAX_TOKENS=16000
+      - OPENAI_TIMEOUT_MS=90000
       - CLICKUP_API_TOKEN=${CLICKUP_API_TOKEN}
       - CLICKUP_WORKSPACE_ID=${CLICKUP_WORKSPACE_ID}
-      - CLICKUP_STATUS_REVISADO=${CLICKUP_STATUS_REVISADO:-revisado}
+      - CLICKUP_STATUS_REVISAR_PREFERENCIA=revisar preferência
+      - CLICKUP_STATUS_REVISADO=revisado
       - CLICKUP_CAMPO_CLIENTE_ID=${CLICKUP_CAMPO_CLIENTE_ID}
-      - PERFIL_FONTE=${PERFIL_FONTE:-clickup}
+      - PERFIL_FONTE=clickup
       - PERFIL_DOCS=${PERFIL_DOCS}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.revisao.rule=Host(`revisao.palomodigital.com.br`)
+        - traefik.http.routers.revisao.entrypoints=websecure
+        - traefik.http.routers.revisao.tls.certresolver=letsencryptresolver
+        - traefik.http.services.revisao.loadbalancer.server.port=3000
+        - traefik.http.services.revisao.loadbalancer.passHostHeader=1
+
+networks:
+  PalomoRede:
+    external: true
+    name: PalomoRede

@@ -68,11 +68,31 @@ OPENAI_API_KEY=... npm run harness
 Casos em `harness/casos/*.json` (gabarito por caso). Os text-only rodam sem
 precisar de assets de imagem.
 
-## Deploy
-`Dockerfile` + `docker-compose.yml` (Node 20, fetch nativo). Subir no Portainer
-com as envs do `.env.example`.
+## Deploy (Docker Swarm + Traefik via Portainer)
+
+Mesmo padrão do `aprovacao-conteudo`:
+
+1. **CI** — push na `master` dispara `.github/workflows/docker-publish.yml`, que
+   builda e publica a imagem em `ghcr.io/palomodigital/revisao-post:latest`.
+2. **Portainer** — criar um **Stack** apontando para o `docker-compose.yml` deste
+   repo (Swarm). O stack usa a rede externa `PalomoRede` e expõe via Traefik em
+   `revisao.palomodigital.com.br` (TLS Let's Encrypt).
+3. **Env vars do stack** (aba *Environment variables* no Portainer — segredos):
+   - `OPENAI_API_KEY`
+   - `CLICKUP_API_TOKEN`
+   - `CLICKUP_WORKSPACE_ID`
+   - `CLICKUP_CAMPO_CLIENTE_ID`
+   - `PERFIL_DOCS` (JSON cliente→docId)
+   (os demais — modelo, effort, status — já vêm com default no compose.)
+4. **DNS** — apontar `revisao.palomodigital.com.br` para o servidor (igual aos
+   outros subdomínios).
+5. **Webhook ClickUp** — registrar `https://revisao.palomodigital.com.br/webhook/clickup`
+   disparando no status **"revisar preferência"**.
+
+Health check: `GET https://revisao.palomodigital.com.br/health`.
 
 ### Pendências de configuração
 - Preencher `CLICKUP_WORKSPACE_ID`, `CLICKUP_CAMPO_CLIENTE_ID` e `PERFIL_DOCS`.
 - Registrar o webhook do ClickUp no status "revisar preferência".
 - Conferir o nome exato do status de destino (`CLICKUP_STATUS_REVISADO`).
+- Criar os Docs de perfil dos clientes (preferências como regra checável).
