@@ -1,0 +1,13 @@
+{
+  "nome": "Tom alarmista/escassez em peça médica (sensacionalismo CFM)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "texto",
+    "legenda": "CUIDADO!!! Se você não tratar essas manchas AGORA vai se arrepender! 😱😱 Corre que as vagas são LIMITADÍSSIMAS e só os espertos garantem!! Chama no direct JÁ!!!"
+  },
+  "gabarito": {
+    "status": "BLOQUEIA",
+    "bloqueios": ["sensacionalismo/indução ao medo (CFM)", "mercantilização/escassez artificial"],
+    "nota": "Alarmismo + escassez em publicidade médica beira infração do CFM, não é só estilo. Deve também trazer itens de atenção de tom."
+  }
+}

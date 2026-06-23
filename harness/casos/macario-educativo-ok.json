@@ -1,0 +1,12 @@
+{
+  "nome": "Post educativo correto (deve aprovar)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "texto",
+    "legenda": "Você sabia que o protetor solar deve ser reaplicado a cada 2 horas de exposição? A proteção solar diária é um dos cuidados mais importantes para prevenir o envelhecimento precoce e reduzir o risco de câncer de pele. Tem dúvidas sobre qual FPS combina com a sua rotina? Agende uma avaliação com a gente. ☀️"
+  },
+  "gabarito": {
+    "status": "APROVA",
+    "bloqueios": []
+  }
+}

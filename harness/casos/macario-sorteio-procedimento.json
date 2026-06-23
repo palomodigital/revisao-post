@@ -1,0 +1,12 @@
+{
+  "nome": "Sorteio de procedimento médico (vedado CFM)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "texto",
+    "legenda": "GIVEAWAY! 🎁 Estamos sorteando 1 sessão GRÁTIS de preenchimento facial! Marque 3 amigas, siga o perfil e compartilhe nos stories pra concorrer. Boa sorte! 💉"
+  },
+  "gabarito": {
+    "status": "BLOQUEIA",
+    "bloqueios": ["sorteio/brinde de procedimento médico"]
+  }
+}

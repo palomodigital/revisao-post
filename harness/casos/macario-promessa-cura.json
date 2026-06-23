@@ -1,0 +1,12 @@
+{
+  "nome": "Promessa de cura definitiva (CFM)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "texto",
+    "legenda": "🔥 ACABE COM A ACNE DE VEZ! Nosso tratamento exclusivo GARANTE pele 100% limpa e livre de espinhas para sempre. Resultado definitivo ou seu dinheiro de volta. Agende e cure sua acne hoje!"
+  },
+  "gabarito": {
+    "status": "BLOQUEIA",
+    "bloqueios": ["promessa de cura/garantia de resultado", "claim sem comprovação"]
+  }
+}

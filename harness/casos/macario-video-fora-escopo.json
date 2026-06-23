@@ -1,0 +1,12 @@
+{
+  "nome": "Vídeo/reel — fora do escopo da v1 (não chama o modelo)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "video",
+    "legenda": "Reels mostrando a rotina da clínica."
+  },
+  "gabarito": {
+    "status": "NAO_SUPORTADO",
+    "bloqueios": []
+  }
+}

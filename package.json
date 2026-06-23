@@ -1,0 +1,15 @@
+{
+  "name": "revisao-posts",
+  "version": "1.0.0",
+  "description": "Motor de revisão de preferência/compliance de posts - Palomo Digital (primeira saída do n8n)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "harness": "node harness/run.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^4.21.0"
+  }
+}
