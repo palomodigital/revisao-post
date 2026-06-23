@@ -49,9 +49,16 @@ async function rodarCaso(caso) {
     return { ...base, erro: `perfil: ${err.message}` };
   }
 
+  let peca;
+  try {
+    peca = prepararPeca(caso.peca);
+  } catch (err) {
+    return { ...base, erro: `imagem: ${err.message}` };
+  }
+
   let parecer;
   try {
-    parecer = await revisar({ cliente: caso.cliente, perfil, peca: caso.peca });
+    parecer = await revisar({ cliente: caso.cliente, perfil, peca });
   } catch (err) {
     return { ...base, erro: `motor: ${err.message}` };
   }
@@ -70,6 +77,24 @@ async function rodarCaso(caso) {
     falsoPositivoBloqueio: !esperadoBloqueia && bloqueouDeFato,
     nItens: parecer.itens.length,
   };
+}
+
+// Casos com imagem referenciam arquivos locais em peca.imagensArquivos
+// (relativos à pasta harness/). Aqui carregamos → base64, como a orquestração
+// faria com anexos do ClickUp/Drive.
+function prepararPeca(peca) {
+  if (!Array.isArray(peca.imagensArquivos) || !peca.imagensArquivos.length) {
+    return peca;
+  }
+  const imagens = peca.imagensArquivos.map((rel) => {
+    const abs = path.join(__dirname, rel);
+    const data = fs.readFileSync(abs).toString('base64');
+    const ext = path.extname(abs).toLowerCase();
+    const media_type =
+      ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+    return { tipo: 'base64', media_type, data };
+  });
+  return { ...peca, imagens };
 }
 
 function imprimirRelatorio(resultados) {

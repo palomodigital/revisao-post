@@ -1,0 +1,14 @@
+{
+  "nome": "Arte dentro da identidade (controle visual: não pode virar bloqueio)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "estatico",
+    "legenda": "Rotina de cuidados com a pele no dia a dia. 💙 Agende sua avaliação com a gente.",
+    "imagensArquivos": ["assets/macario-visual-ok.png"]
+  },
+  "gabarito": {
+    "status": "SINALIZA",
+    "bloqueios": [],
+    "nota": "Arte dentro da paleta/tipografia. O que IMPORTA neste controle é NÃO virar bloqueio (conteúdo é limpo). Pode trazer atenções leves (ex.: wordmark de texto não é o logo oficial, tom 'com a gente') — isso é aceitável; o gabarito aceita SINALIZA ou APROVA desde que sem bloqueio."
+  }
+}

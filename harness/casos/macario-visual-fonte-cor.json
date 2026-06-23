@@ -1,0 +1,14 @@
+{
+  "nome": "Arte fora da identidade visual (fonte manuscrita + cor errada + sem logo)",
+  "cliente": "Dr. Macário",
+  "peca": {
+    "tipo": "estatico",
+    "legenda": "Rotina de cuidados com a pele no dia a dia. 💙 Agende sua avaliação com a gente.",
+    "imagensArquivos": ["assets/macario-fonte-ruim.png"]
+  },
+  "gabarito": {
+    "status": "SINALIZA",
+    "bloqueios": [],
+    "nota": "Conteúdo é OK (sem compliance). A arte viola a identidade: fundo magenta fora da paleta, fonte manuscrita/decorativa e logo ausente — tudo 'atencao'. Teste se o gpt-5 PERCEBE estilo visual."
+  }
+}

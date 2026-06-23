@@ -19,7 +19,9 @@ const config = {
     maxTokens: Number(process.env.OPENAI_MAX_TOKENS || 16000),
     // Timeout DURO do motor. Estourou → falha limpa e a orquestração escreve
     // INDISPONIVEL e segue. A esteira nunca trava por causa do modelo.
-    timeoutMs: Number(process.env.OPENAI_TIMEOUT_MS || 45000),
+    // 90s: peças COM imagem (visão) + raciocínio passam de 45s às vezes; como o
+    // processamento é em background, dar essa folga evita INDISPONIVEL à toa.
+    timeoutMs: Number(process.env.OPENAI_TIMEOUT_MS || 90000),
     // Esforço de raciocínio do gpt-5: minimal|low|medium|high. 'medium'
     // equilibra custo e qualidade; subir pra 'high' se compliance escapar.
     reasoningEffort: process.env.OPENAI_REASONING_EFFORT || 'medium',

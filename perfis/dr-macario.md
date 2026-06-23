@@ -34,8 +34,15 @@
   comerciais.
 
 ## Identidade visual (estáticos/carrosséis)
+> Regras verificáveis na imagem — sinalizar como "atencao" quando desrespeitadas.
 - **Paleta:** tons de azul, verde-água e branco; visual limpo e clínico.
-- **Logo:** presente, discreto, canto inferior.
+  Sinalizar peças com cores fortes fora dessa paleta (rosa/magenta, vermelho,
+  neon, fundos muito saturados).
+- **Tipografia:** usar fontes **sem-serifa limpas e legíveis** (estilo
+  Helvetica / Arial / Inter). Sinalizar uso de fontes **manuscritas, cursivas,
+  decorativas ou serifadas**, e mistura de mais de 2 fontes na mesma peça.
+- **Logo:** deve estar **presente** (discreto, canto inferior). Sinalizar
+  ausência do logo.
 - **Observações:** evitar imagens de banco genéricas demais; preferir fotos
   reais da clínica ou ilustrações próprias. Sempre incluir convite à consulta
   como CTA, sem pressão.
