@@ -15,7 +15,7 @@ checkbox na task do ClickUp (podem ser os dois ao mesmo tempo):
 ## Arquitetura (2 camadas)
 
 ```
-ClickUp: task entra no status "Revisar" com checkbox(es) marcado(s)
+ClickUp: task entra no status "Em revisão" com checkbox(es) marcado(s)
         │  webhook
         ▼
 src/orquestracao/   ← gatekeeper de status, lê os checkboxes (roteamento),
@@ -103,7 +103,7 @@ Mesmo padrão do `aprovacao-conteudo`:
 4. **DNS** — apontar `revisao.palomodigital.com.br` para o servidor (igual aos
    outros subdomínios).
 5. **Webhook ClickUp** — registrar `https://revisao.palomodigital.com.br/webhook/clickup`
-   disparando no status gatilho (`CLICKUP_STATUS_REVISAR`, ex.: **"Revisar"**),
+   disparando no status gatilho (`CLICKUP_STATUS_REVISAR`, ex.: **"Em revisão"**),
    evento `taskStatusUpdated`.
 
 Health check: `GET https://revisao.palomodigital.com.br/health`.

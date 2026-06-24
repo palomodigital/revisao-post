@@ -37,7 +37,7 @@ const config = {
     statusRevisar:
       process.env.CLICKUP_STATUS_REVISAR ||
       process.env.CLICKUP_STATUS_REVISAR_PREFERENCIA ||
-      'revisar',
+      'em revisão',
     // Para onde a task vai depois da revisão — sempre, inclusive em falha.
     statusRevisado: process.env.CLICKUP_STATUS_REVISADO || 'revisado',
     // Id do custom field "Cliente" (dropdown). Resolvemos a opção -> nome.
