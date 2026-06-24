@@ -31,13 +31,21 @@ const config = {
     apiToken: process.env.CLICKUP_API_TOKEN,
     // Workspace (team) id — necessário para a API de Docs v3 (busca do perfil).
     workspaceId: process.env.CLICKUP_WORKSPACE_ID,
-    // Status que DISPARA este motor (webhook). Só este trecho da esteira é nosso.
-    statusRevisarPreferencia:
-      process.env.CLICKUP_STATUS_REVISAR_PREFERENCIA || 'revisar preferência',
+    // Status que DISPARA este motor (webhook). Genérico: os CHECKBOXES abaixo é
+    // que decidem QUAL revisão rodar (ortográfica e/ou de preferência).
+    // (CLICKUP_STATUS_REVISAR_PREFERENCIA segue aceito por retrocompatibilidade.)
+    statusRevisar:
+      process.env.CLICKUP_STATUS_REVISAR ||
+      process.env.CLICKUP_STATUS_REVISAR_PREFERENCIA ||
+      'revisar',
     // Para onde a task vai depois da revisão — sempre, inclusive em falha.
     statusRevisado: process.env.CLICKUP_STATUS_REVISADO || 'revisado',
     // Id do custom field "Cliente" (dropdown). Resolvemos a opção -> nome.
     campoClienteId: process.env.CLICKUP_CAMPO_CLIENTE_ID || '',
+    // Ids dos custom fields tipo CHECKBOX que o responsável marca para escolher
+    // o tipo de revisão. Podem ser marcados os dois (roda as duas revisões).
+    campoRevisaoOrtograficaId: process.env.CLICKUP_CAMPO_REVISAO_ORTOGRAFICA_ID || '',
+    campoRevisaoPerfilId: process.env.CLICKUP_CAMPO_REVISAO_PERFIL_ID || '',
   },
 
   perfil: {

@@ -1,6 +1,12 @@
-// Orquestração: webhook do ClickUp (status "revisar preferência") → revisão →
-// comentário no card → move pra "Revisado". Responde 200 RÁPIDO e processa em
-// background (o motor leva ~30-45s; evita timeout/retry do webhook).
+// Orquestração: webhook do ClickUp (status gatilho "Revisar") → lê os CHECKBOXES
+// que o responsável marcou → roda a(s) revisão(ões) escolhida(s) → comentário(s)
+// no card → move pra "Revisado". Responde 200 RÁPIDO e processa em background
+// (o motor leva ~30-45s; evita timeout/retry do webhook).
+//
+// Dois tipos de revisão, escolhidos por checkbox (podem ser os dois):
+//   - Revisão ortográfica (texto + texto dentro das imagens).
+//   - Revisão de preferência (perfil do cliente + compliance).
+// Marcados os dois → roda as duas e posta UM comentário para cada.
 //
 // REGRA DE OURO: a esteira NUNCA trava. Qualquer falha vira nota INDISPONIVEL
 // e a task vai pra "Revisado" do mesmo jeito — o revisor humano assume.
@@ -9,6 +15,7 @@ const config = require('../config');
 const clickup = require('./clickup');
 const { carregar_perfil } = require('./perfil');
 const { revisar } = require('../motor/revisor');
+const { revisarOrtografia } = require('../motor/ortografia');
 
 // Handler do POST do webhook. Não usa o motor aqui — só dispara o processamento.
 function handler(req, res) {
@@ -40,26 +47,72 @@ async function processarTask(taskId) {
   // Só agimos se a task está exatamente no status que nos dispara — senão sairia
   // revisando (custo) e movendo pra "Revisado" qualquer task que mudasse de status.
   const statusAtual = (task.status && task.status.status) || '';
-  const gatilho = config.clickup.statusRevisarPreferencia || '';
+  const gatilho = config.clickup.statusRevisar || '';
   if (statusAtual.trim().toLowerCase() !== gatilho.trim().toLowerCase()) {
     return; // não é o nosso gatilho — ignora silenciosamente.
   }
 
+  // ROTEAMENTO: os checkboxes marcados pelo responsável decidem o que rodar.
+  const querOrtografia = clickup.checkboxMarcado(task, config.clickup.campoRevisaoOrtograficaId);
+  const querPerfil = clickup.checkboxMarcado(task, config.clickup.campoRevisaoPerfilId);
+
+  // Nenhum tipo marcado: avisa (acionável) e segue — a esteira não trava.
+  if (!querOrtografia && !querPerfil) {
+    await tentar(() => clickup.adicionarComentario(taskId, formatarNenhumTipo()));
+    await tentar(() => clickup.atualizarStatus(taskId, config.clickup.statusRevisado));
+    return;
+  }
+
+  // A peça (texto + imagens) é compartilhada pelas duas revisões. Se o download
+  // falhar, guardamos o erro e cada revisão pedida vira INDISPONIVEL.
+  let peca;
+  let erroPeca;
   try {
+    peca = await montarPeca(task);
+  } catch (err) {
+    erroPeca = err;
+    console.error(`[${taskId}] falha ao montar peça:`, err.message);
+  }
+
+  // Cada revisão é independente: uma falhar não derruba a outra.
+  if (querOrtografia) {
+    await rodarRevisaoOrtografia(taskId, peca, erroPeca);
+  }
+  if (querPerfil) {
+    await rodarRevisaoPerfil(taskId, task, peca, erroPeca);
+  }
+
+  // Aconteça o que acontecer, a task sai do limbo: vai pra "Revisado".
+  await tentar(() => clickup.atualizarStatus(taskId, config.clickup.statusRevisado));
+}
+
+// Roda a revisão ortográfica e comenta. Falhou → comentário INDISPONIVEL.
+async function rodarRevisaoOrtografia(taskId, peca, erroPeca) {
+  try {
+    if (erroPeca) throw erroPeca;
+    const parecer = await revisarOrtografia({ peca });
+    await clickup.adicionarComentario(taskId, formatarParecerOrtografia(parecer));
+  } catch (err) {
+    console.error(`[${taskId}] revisão ortográfica indisponível:`, err.message);
+    await tentar(() =>
+      clickup.adicionarComentario(taskId, formatarIndisponivel('ortográfica', err.message)),
+    );
+  }
+}
+
+// Roda a revisão de preferência (perfil) e comenta. Falhou → INDISPONIVEL.
+async function rodarRevisaoPerfil(taskId, task, peca, erroPeca) {
+  try {
+    if (erroPeca) throw erroPeca;
     const cliente = clickup.resolverCliente(task);
     const perfil = await carregar_perfil(cliente);
-    const peca = await montarPeca(task);
-
     const parecer = await revisar({ cliente, perfil, peca });
     await clickup.adicionarComentario(taskId, formatarParecer(cliente, parecer));
   } catch (err) {
-    console.error(`[${taskId}] revisão indisponível:`, err.message);
+    console.error(`[${taskId}] revisão de preferência indisponível:`, err.message);
     await tentar(() =>
-      clickup.adicionarComentario(taskId, formatarIndisponivel(err.message)),
+      clickup.adicionarComentario(taskId, formatarIndisponivel('de preferência', err.message)),
     );
-  } finally {
-    // Aconteça o que acontecer, a task sai do limbo: vai pra "Revisado".
-    await tentar(() => clickup.atualizarStatus(taskId, config.clickup.statusRevisado));
   }
 }
 
@@ -117,9 +170,42 @@ function formatarParecer(cliente, parecer) {
   return linhas.join('\n');
 }
 
-function formatarIndisponivel(motivo) {
+function formatarParecerOrtografia(parecer) {
+  const cabecalho =
+    parecer.status === 'CORRIGIR'
+      ? '📝 Revisão ortográfica: CORREÇÕES SUGERIDAS'
+      : '✅ Revisão ortográfica: SEM ERROS';
+
+  const linhas = [cabecalho, '', parecer.resumo];
+
+  if (parecer.itens.length) {
+    linhas.push('', '— Correções —');
+    for (const it of parecer.itens) {
+      linhas.push(
+        '',
+        `• [${it.tipo}] ${it.onde}`,
+        `   "${it.trecho}" → "${it.correcao}"`,
+      );
+    }
+  }
+
+  linhas.push('', '_Revisão automática — copiloto do revisor humano, não é decisão final._');
+  return linhas.join('\n');
+}
+
+// Comentário quando a task entra no status gatilho sem nenhum checkbox marcado.
+function formatarNenhumTipo() {
   return [
-    'ℹ️ Revisão de preferência: INDISPONÍVEL',
+    'ℹ️ Revisão automática: NENHUM TIPO SELECIONADO',
+    '',
+    'A task entrou em revisão, mas nenhum checkbox de tipo de revisão estava marcado.',
+    'Marque "Revisão ortográfica" e/ou "Revisão por perfil" e mova a task de volta para o status de revisão para rodar.',
+  ].join('\n');
+}
+
+function formatarIndisponivel(tipo, motivo) {
+  return [
+    `ℹ️ Revisão ${tipo}: INDISPONÍVEL`,
     '',
     'Não foi possível gerar o parecer automático desta peça. Ela segue para revisão humana normalmente.',
     '',

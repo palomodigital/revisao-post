@@ -38,6 +38,81 @@ const JSON_SCHEMA = {
   },
 };
 
+// --- Revisão ORTOGRÁFICA -----------------------------------------------
+//
+// Contrato próprio, separado da revisão de preferência: aqui não há "bloqueio"
+// nem compliance — é só erro objetivo de português (ortografia, gramática,
+// pontuação, digitação), incluindo o texto que aparece DENTRO das imagens.
+const TIPOS_ORTO = ['ortografia', 'gramatica', 'pontuacao', 'digitacao', 'outro'];
+
+const JSON_SCHEMA_ORTOGRAFIA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['status', 'resumo', 'itens'],
+  properties: {
+    status: { type: 'string', enum: ['APROVA', 'CORRIGIR'] },
+    resumo: { type: 'string' },
+    itens: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['tipo', 'trecho', 'correcao', 'onde'],
+        properties: {
+          tipo: { type: 'string', enum: TIPOS_ORTO },
+          trecho: { type: 'string' },
+          correcao: { type: 'string' },
+          onde: { type: 'string' },
+        },
+      },
+    },
+  },
+};
+
+// Valida e normaliza o parecer ortográfico. Mesmas reparações leves do validar()
+// de preferência. status: CORRIGIR se há itens, APROVA se não há.
+function validarOrtografia(entrada) {
+  let obj = entrada;
+  if (typeof obj === 'string') {
+    const limpo = obj.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    try {
+      obj = JSON.parse(limpo);
+    } catch (_) {
+      return { ok: false, erro: `Resposta não é JSON válido: ${limpo.slice(0, 200)}` };
+    }
+  }
+  if (!obj || typeof obj !== 'object') {
+    return { ok: false, erro: 'Resposta vazia ou não é objeto' };
+  }
+
+  const itens = Array.isArray(obj.itens) ? obj.itens : [];
+  const itensNorm = [];
+  for (const it of itens) {
+    if (!it || typeof it !== 'object') continue;
+    const trecho = str(it.trecho);
+    const correcao = str(it.correcao);
+    if (!trecho && !correcao) continue; // item vazio — descarta.
+    const tipo = TIPOS_ORTO.includes(it.tipo) ? it.tipo : 'outro';
+    itensNorm.push({ tipo, trecho, correcao, onde: str(it.onde) });
+  }
+
+  let status = obj.status;
+  if (status !== 'APROVA' && status !== 'CORRIGIR') {
+    status = itensNorm.length ? 'CORRIGIR' : 'APROVA';
+  }
+  // Coerência: itens ⇒ CORRIGIR; sem itens ⇒ APROVA.
+  if (itensNorm.length && status === 'APROVA') status = 'CORRIGIR';
+  if (!itensNorm.length && status === 'CORRIGIR') status = 'APROVA';
+
+  const resumo =
+    str(obj.resumo) ||
+    (status === 'APROVA'
+      ? 'Nenhum erro de português encontrado.'
+      : `Foram encontrados ${itensNorm.length} ponto(s) a corrigir.`);
+
+  return { ok: true, valor: { status, resumo, itens: itensNorm } };
+}
+
 // Saída pronta para vídeo (v1 não suporta) — não chama o modelo.
 function naoSuportado(motivo) {
   return {
@@ -114,4 +189,13 @@ function resumoPadrao(status, n) {
   return '';
 }
 
-module.exports = { JSON_SCHEMA, STATUS, SEVERIDADES, validar, naoSuportado };
+module.exports = {
+  JSON_SCHEMA,
+  STATUS,
+  SEVERIDADES,
+  validar,
+  naoSuportado,
+  JSON_SCHEMA_ORTOGRAFIA,
+  TIPOS_ORTO,
+  validarOrtografia,
+};

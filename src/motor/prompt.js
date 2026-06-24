@@ -51,6 +51,37 @@ Você NÃO é um porteiro: não aprova nem reprova nada sozinho. Você sinaliza 
 
 Responda SOMENTE no formato estruturado solicitado. Não escreva nada fora dele.`;
 
+// System prompt da revisão ORTOGRÁFICA. Independente da de preferência: aqui não
+// há compliance nem gosto — só erro objetivo de português, na legenda E no texto
+// que aparece dentro das imagens (estático/carrossel).
+const SYSTEM_ORTOGRAFICO = `Você é um revisor ORTOGRÁFICO e GRAMATICAL de conteúdo para redes sociais, trabalhando como COPILOTO de um revisor humano de uma agência. Sua função é encontrar erros de português numa peça (a legenda/texto e o texto que aparece DENTRO das imagens) e propor a correção.
+
+## O que revisar
+- Ortografia: grafia errada, acentuação, uso de hífen.
+- Gramática: concordância, regência, conjugação verbal, crase.
+- Pontuação claramente incorreta (que muda ou trunca o sentido).
+- Digitação: letras trocadas/faltando, espaços duplicados, palavras repetidas.
+- Texto DENTRO das imagens: leia o texto visível em estáticos/carrosséis e revise da mesma forma, dizendo em qual imagem está.
+
+## O que NÃO fazer
+- NÃO reescrever por estilo ou gosto. Aponte apenas ERRO objetivo de português.
+- NÃO sinalizar escolhas estilísticas válidas de rede social: linguagem informal, gírias propositais, ausência de ponto final em frase curta quando não compromete o sentido, emojis.
+- NÃO inventar erro. Na dúvida se é realmente erro, NÃO aponte.
+- NÃO alterar nomes próprios, marcas, hashtags (#) e menções (@), a não ser que haja erro evidente de grafia.
+
+## Como preencher o parecer
+- status:
+  - "CORRIGIR": há pelo menos um erro de português.
+  - "APROVA": nenhum erro encontrado.
+- resumo: 1 a 2 frases em português dizendo o veredito.
+- itens: um por erro encontrado, com:
+  - tipo: "ortografia" | "gramatica" | "pontuacao" | "digitacao" | "outro".
+  - trecho: o texto exato como está escrito (com o erro).
+  - correcao: como deve ficar corrigido.
+  - onde: onde aparece (ex.: "legenda", "imagem 1", "imagem 2 — título").
+
+Responda SOMENTE no formato estruturado solicitado. Não escreva nada fora dele.`;
+
 // Monta o array de blocos de conteúdo do usuário (texto + imagens) para a
 // Messages API. `peca` segue o contrato do brief; imagens já chegam prontas
 // como string (url ou base64) ou objeto {tipo, media_type, data}.
@@ -94,6 +125,35 @@ function montarBlocosUsuario({ cliente, perfil, peca, contexto }) {
   return blocos;
 }
 
+// Monta os blocos da revisão ORTOGRÁFICA: a peça (texto + imagens), sem perfil.
+function montarBlocosOrtografia({ peca, contexto }) {
+  const blocos = [];
+
+  blocos.push({
+    type: 'text',
+    text:
+      `## Peça a revisar (ortografia e gramática)\n` +
+      `Tipo: ${peca.tipo}\n` +
+      (peca.legenda ? `\n### Legenda / texto:\n${peca.legenda}\n` : '\n(sem legenda escrita)\n') +
+      (contexto ? `\n### Contexto adicional:\n${contexto}\n` : '') +
+      (temImagens(peca)
+        ? `\nAs imagens da peça seguem abaixo, na ordem. Revise também o texto que aparece DENTRO delas.\n`
+        : ''),
+  });
+
+  for (const img of imagensDaPeca(peca)) {
+    blocos.push(blocoImagem(img));
+  }
+
+  blocos.push({
+    type: 'text',
+    text:
+      'Revise a ortografia e a gramática da peça acima e devolva o parecer no formato estruturado.',
+  });
+
+  return blocos;
+}
+
 function imagensDaPeca(peca) {
   if (Array.isArray(peca.imagens)) return peca.imagens;
   if (peca.imagem) return [peca.imagem];
@@ -122,4 +182,9 @@ function blocoImagem(img) {
   };
 }
 
-module.exports = { SYSTEM, montarBlocosUsuario };
+module.exports = {
+  SYSTEM,
+  montarBlocosUsuario,
+  SYSTEM_ORTOGRAFICO,
+  montarBlocosOrtografia,
+};

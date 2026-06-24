@@ -72,6 +72,17 @@ function resolverCliente(task) {
   return (opcao && (opcao.name || opcao.label)) || '';
 }
 
+// Lê um custom field tipo CHECKBOX (booleano). O ClickUp devolve o valor de
+// formas variadas ("true"/"false", true/false, "1"/"0") — normalizamos tudo.
+// Retorna false se o campo não estiver presente/configurado.
+function checkboxMarcado(task, campoId) {
+  if (!campoId || !Array.isArray(task.custom_fields)) return false;
+  const campo = task.custom_fields.find((c) => c.id === campoId);
+  if (!campo) return false;
+  const v = campo.value;
+  return v === true || v === 'true' || v === 1 || v === '1';
+}
+
 // --- Docs (v3) ----------------------------------------------------------
 
 // Lê um Doc inteiro como texto: concatena o conteúdo de todas as páginas.
@@ -144,6 +155,7 @@ module.exports = {
   atualizarStatus,
   adicionarComentario,
   resolverCliente,
+  checkboxMarcado,
   lerDoc,
   baixarComoBase64,
 };
