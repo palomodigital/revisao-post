@@ -48,7 +48,9 @@ async function processarTask(taskId) {
   // revisando (custo) e movendo pra "Revisado" qualquer task que mudasse de status.
   const statusAtual = (task.status && task.status.status) || '';
   const gatilho = config.clickup.statusRevisar || '';
-  if (statusAtual.trim().toLowerCase() !== gatilho.trim().toLowerCase()) {
+  // Comparação tolerante: ignora maiúscula, espaço E acento ("em revisao" casa
+  // com "em revisão"). Evita falha silenciosa por detalhe de digitação no env.
+  if (normalizar(statusAtual) !== normalizar(gatilho)) {
     return; // não é o nosso gatilho — ignora silenciosamente.
   }
 
@@ -225,6 +227,16 @@ function extrairTaskId(body) {
     (body.task && body.task.id) ||
     null
   );
+}
+
+// Normaliza nome de status para comparação: minúscula, sem acento, sem espaço
+// nas pontas. Assim o gatilho funciona mesmo com pequenas variações de escrita.
+function normalizar(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
 }
 
 // Executa uma ação ignorando falha (usado no fail-safe; não pode lançar).
