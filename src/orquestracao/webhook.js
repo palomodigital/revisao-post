@@ -207,7 +207,12 @@ function formatarIndisponivel(tipo, motivo) {
 
 // --- Utilitários --------------------------------------------------------
 
-// Extrai o id da task de formatos comuns de payload do webhook do ClickUp.
+// Extrai o id da task dos formatos de payload do ClickUp:
+//  - Webhook API v2: { task_id, event, history_items } → body.task_id.
+//  - Automação "Webhook de chamada" (atual): { auto_id, payload:{ id } } → body.payload.id.
+//  - Automação "Webhook de chamada" (legado): task no topo → body.id.
+// Independente do formato, só precisamos do id — processarTask re-busca a task
+// completa na API v2 (com custom_fields). A ordem evita pegar id errado.
 function extrairTaskId(body) {
   if (!body || typeof body !== 'object') return null;
   return (
@@ -215,6 +220,7 @@ function extrairTaskId(body) {
     body.taskId ||
     (body.payload && body.payload.id) ||
     (body.task && body.task.id) ||
+    body.id ||
     null
   );
 }
