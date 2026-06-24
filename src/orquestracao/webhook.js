@@ -58,10 +58,10 @@ async function processarTask(taskId) {
   const querOrtografia = clickup.checkboxMarcado(task, config.clickup.campoRevisaoOrtograficaId);
   const querPerfil = clickup.checkboxMarcado(task, config.clickup.campoRevisaoPerfilId);
 
-  // Nenhum tipo marcado: avisa (acionável) e segue — a esteira não trava.
+  // Nenhum checkbox marcado: "em revisão" também é o status da revisão HUMANA
+  // normal. Sem checkbox, o bot NÃO foi convidado — não toca na task (não
+  // comenta, não move, não revisa). Só age quando o responsável marca um tipo.
   if (!querOrtografia && !querPerfil) {
-    await tentar(() => clickup.adicionarComentario(taskId, formatarNenhumTipo()));
-    await tentar(() => clickup.atualizarStatus(taskId, config.clickup.statusRevisado));
     return;
   }
 
@@ -193,16 +193,6 @@ function formatarParecerOrtografia(parecer) {
 
   linhas.push('', '_Revisão automática — copiloto do revisor humano, não é decisão final._');
   return linhas.join('\n');
-}
-
-// Comentário quando a task entra no status gatilho sem nenhum checkbox marcado.
-function formatarNenhumTipo() {
-  return [
-    'ℹ️ Revisão automática: NENHUM TIPO SELECIONADO',
-    '',
-    'A task entrou em revisão, mas nenhum checkbox de tipo de revisão estava marcado.',
-    'Marque "Revisão ortográfica" e/ou "Revisão por perfil" e mova a task de volta para o status de revisão para rodar.',
-  ].join('\n');
 }
 
 function formatarIndisponivel(tipo, motivo) {
